@@ -1,0 +1,56 @@
+import React, { useEffect, useState } from 'react';
+import { RecoilRoot } from 'recoil';
+import { useRouter } from 'next/router';
+import toast, { Toaster } from 'react-hot-toast';
+import Navbar from './Navbar';
+import { logout, onUserStateChange } from '../../../pages/api/auth/firebase';
+
+const signOutNotify = () =>
+  toast('반가웠어요 잘가요!', {
+    icon: '👋',
+  });
+
+const Layout = ({ children }) => {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userData, setUserData] = useState(null);
+
+  const router = useRouter();
+
+  // 현재 로그인 한 사용자 가져오기, 렌더링 시 null값 되는 것 방지
+  useEffect(() => {
+    // isLoggedIn은 로그인, 로그아웃, 초기화 시 반응!
+    onUserStateChange((user) => {
+      if (user) {
+        setUserData(user);
+      } else {
+        setUserData(null);
+      }
+      setIsLoggedIn(true);
+    });
+  }, []);
+
+  const handleLogout = () => {
+    // firebase logout이 성공하게 되면 null를 받아옵니다.
+    logout().then(() => router.push('/') && signOutNotify());
+  };
+
+  return (
+    <div>
+      <RecoilRoot>
+        {isLoggedIn ? (
+          <Navbar
+            isLoggedIn={isLoggedIn}
+            userData={userData}
+            handleLogout={handleLogout}
+          />
+        ) : (
+          ''
+        )}
+        <Toaster position='top-right' reverseOrder={false} autoClose={1000} />
+        {children}
+      </RecoilRoot>
+    </div>
+  );
+};
+
+export default Layout;
